@@ -1,0 +1,28 @@
+name: Mirror Linux release asset
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download validated Linux package
+        env:
+          SOURCE_TOKEN: ${{ secrets.PATD_SOURCE_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 5 --retry-delay 3 \
+            --header "Authorization: Bearer ${SOURCE_TOKEN}" \
+            --header "Accept: application/octet-stream" \
+            --output PATD-LinuxMint-v2.60.48.zip \
+            https://github.com/CBmota41/PATD-Build-Private/releases/download/v2.60.48/PATD-LinuxMint-v2.60.48.zip
+          echo '0453a4455d0dfb5160142256b3b75b4b8339535f46798dbdfb7a4cae15701b38  PATD-LinuxMint-v2.60.48.zip' | sha256sum --check
+
+      - name: Upload public release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload v2.60.48 PATD-LinuxMint-v2.60.48.zip --repo "${GITHUB_REPOSITORY}" --clobber
